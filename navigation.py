@@ -197,18 +197,24 @@ def listLiveTvChannels(channeldir_name):
                 else:
                     detail = str(event['event']['cmsid'])
                 if 'assetid' not in event['event']:
-                    assetid_match = re.search('\/([0-9]*)\.html', event['event']['detailPage'])
-                    if assetid_match:
-                        assetid = int(assetid_match.group(1))
-                        try:
-                            if assetid > 0:
-                                mediainfo = getAssetDetailsFromCache(assetid)
-                                event['mediainfo'] = mediainfo
-                                manifest_url = mediainfo['media_url']
-                                if not manifest_url.startswith('http://'):
-                                    continue
-                        except:
-                            continue
+                    manifest_url = ''
+                    if 'mediaurl' in event['channel'] and event['channel']['mediaurl'].startswith('http'):
+                        manifest_url = event['channel']['mediaurl']
+
+                    if not manifest_url.startswith('http') or (extMediaInfos and extMediaInfos == 'true'):
+                        assetid_match = re.search('\/([0-9]*)\.html', event['event']['detailPage'])
+                        if assetid_match:
+                            assetid = int(assetid_match.group(1))
+                            try:
+                                if assetid > 0:
+                                    mediainfo = getAssetDetailsFromCache(assetid)
+                                    event['mediainfo'] = mediainfo
+                                    if not manifest_url.startswith('http'):
+                                        manifest_url = mediainfo['media_url']
+                                    if not manifest_url.startswith('http'):
+                                        continue
+                            except:
+                                continue
                     url = common.build_url({'action': 'playLive', 'manifest_url': manifest_url, 'package_code': event['channel']['mobilepc']})
                 elif event['channel']['msMediaUrl'].startswith('http://'):
                     manifest_url = event['channel']['msMediaUrl']
@@ -409,7 +415,7 @@ def getInfoLabel(asset_type, item_data):
     info['plot'] = data.get('synopsis', '').replace('\n', '').strip()
     if info['plot'] == '':
         info['plot'] = data.get('description', '').replace('\n', '').strip()
-    info['duration'] = data.get('lenght', 0) * 60
+    #info['duration'] = data.get('lenght', 0) * 60
     if data.get('main_trailer', {}).get('trailer', {}).get('url', '') != '':
         info['trailer'] = data.get('main_trailer', {}).get('trailer', {}).get('url', '')
     if data.get('cast_list', {}).get('cast', {}) != '':
