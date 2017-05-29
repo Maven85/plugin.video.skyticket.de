@@ -415,7 +415,7 @@ def getInfoLabel(asset_type, item_data):
     info['plot'] = data.get('synopsis', '').replace('\n', '').strip()
     if info['plot'] == '':
         info['plot'] = data.get('description', '').replace('\n', '').strip()
-    #info['duration'] = data.get('lenght', 0) * 60
+    info['duration'] = data.get('lenght', 0) * 60
     if data.get('main_trailer', {}).get('trailer', {}).get('url', '') != '':
         info['trailer'] = data.get('main_trailer', {}).get('trailer', {}).get('url', '')
     if data.get('cast_list', {}).get('cast', {}) != '':
