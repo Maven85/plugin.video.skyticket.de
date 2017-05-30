@@ -214,18 +214,22 @@ def listLiveTvChannels(channeldir_name):
                                     if not manifest_url.startswith('http'):
                                         continue
                             except:
-                                continue
+                                if not manifest_url.startswith('http'):
+                                    continue
                     url = common.build_url({'action': 'playLive', 'manifest_url': manifest_url, 'package_code': event['channel']['mobilepc']})
-                elif event['channel']['msMediaUrl'].startswith('http://'):
-                    manifest_url = event['channel']['msMediaUrl']
-                    url = common.build_url({'action': 'playLive', 'manifest_url': manifest_url, 'package_code': event['channel']['mobilepc']})
-
-                else:                    
-                    url = common.build_url({'action': 'playVod', 'vod_id': event['event']['assetid']})
+                else:
+                    if event['channel']['msMediaUrl'].startswith('http'):
+                        manifest_url = event['channel']['msMediaUrl']
+                        url = common.build_url({'action': 'playLive', 'manifest_url': manifest_url, 'package_code': event['channel']['mobilepc']})
+                    else:                    
+                        url = common.build_url({'action': 'playVod', 'vod_id': event['event']['assetid']})
+                    
                     try:
-                        if event['event']['assetid'] > 0:
+                        xbmc.log('assetid = ' + str(event['event']['assetid']))
+                        if event['event']['assetid'] > 0 and extMediaInfos and extMediaInfos == 'true':
                             mediainfo = getAssetDetailsFromCache(event['event']['assetid'])
                             event['mediainfo'] = mediainfo
+                            xbmc.log('mediainfo = ' + str(mediainfo))
                     except:
                         pass
 
@@ -239,12 +243,27 @@ def listLiveTvChannels(channeldir_name):
             listAssets(sorted(details.values(), key=lambda k:k['data']['channel']['name']))
 
 def getlistLiveChannelData(channel = ''):
-    version = 'ipad'
-    if channel.lower() == 'bundesliga' or channel.lower() == 'sport':
-        version = 'web'
-    url = 'http://www.skygo.sky.de/epgd/sg/' + version + '/excerpt/'
+    url = 'http://www.skygo.sky.de/epgd/sg/ipad/excerpt/'
     data = requests.get(url).json()
     data = [json for json in data if json['tabName'] != 'welt']
+    
+    if channel.lower() == 'bundesliga' or channel.lower() == 'sport':
+        channel_list = []
+        for tab in data:
+            for event in tab['eventList']:
+                channel_list.append(event['channel']['name'])
+
+        url = 'http://www.skygo.sky.de/epgd/sg/web/excerpt/'        
+        data_web = requests.get(url).json()
+        data_web = [json for json in data_web if json['tabName'] != 'welt']
+        for tab_web in data_web:
+            for event_web in tab_web['eventList']:
+                if event_web['channel']['name'] not in channel_list:
+                    channel_list.append(event_web['channel']['name'])
+                    for tab in data:
+                        if tab['tabName'] == tab_web['tabName']:
+                            tab['eventList'].append(event_web)
+
     for tab in data:
         if tab['tabName'] == 'film':
             tab['tabName'] = 'cinema'
