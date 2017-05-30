@@ -204,7 +204,11 @@ def listLiveTvChannels(channeldir_name):
                     if not manifest_url.startswith('http') or (extMediaInfos and extMediaInfos == 'true'):
                         assetid_match = re.search('\/([0-9]*)\.html', event['event']['detailPage'])
                         if assetid_match:
-                            assetid = int(assetid_match.group(1))
+                            assetid = 0
+                            try:
+                                assetid = int(assetid_match.group(1))
+                            except:
+                                pass
                             try:
                                 if assetid > 0:
                                     mediainfo = getAssetDetailsFromCache(assetid)
