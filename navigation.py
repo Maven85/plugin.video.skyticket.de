@@ -553,7 +553,6 @@ def listAssets(asset_list, isWatchlist=False):
             info, item['data'] = getInfoLabel(item['type'], item['data']) 
             li.setInfo('video', info)
             item['url'] = item['url'] + ('&' if item['url'].find('?') > -1 else '?') + urllib.urlencode({'infolabels': info})
-            xbmc.log("skygo url = " + item['url'])
             li.setLabel(info['title'])         
             li.setArt({'poster': getPoster(item['data']), 'fanart': getHeroImage(item['data'])})           
         if item['type'] in ['Film']:
