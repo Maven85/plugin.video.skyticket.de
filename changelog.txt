@@ -1,3 +1,5 @@
+1.9.9
+- Infolabels als URL-Parameter
 1.9.8
 - LiveTV: Sportsender zeigen wieder Livestream; Anzeige aller verfügbaren Sportsender
 1.9.7

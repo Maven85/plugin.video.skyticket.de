@@ -18,11 +18,17 @@ if 'action' in params:
     print params
 
     if params['action'] == 'playVod':
-        vod.playAsset(params['vod_id'])
+        if 'infolabels' in params:
+            vod.playAsset(params['vod_id'], params['infolabels'])
+        else:
+            vod.playAsset(params['vod_id'])
     elif params['action'] == 'playClip':
         clips.playClip(params['id'])
     elif params['action'] == 'playLive':
-        liveTv.playLiveTv(params['manifest_url'], params['package_code'])
+        if 'infolabels' in params:
+            liveTv.playLiveTv(params['manifest_url'], params['package_code'], params['infolabels'])
+        else:    
+            liveTv.playLiveTv(params['manifest_url'], params['package_code'])
 
     elif params['action'] == 'listLiveTvChannelDirs':
         nav.listLiveTvChannelDirs()

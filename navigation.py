@@ -229,11 +229,9 @@ def listLiveTvChannels(channeldir_name):
                         url = common.build_url({'action': 'playVod', 'vod_id': event['event']['assetid']})
                     
                     try:
-                        xbmc.log('assetid = ' + str(event['event']['assetid']))
                         if event['event']['assetid'] > 0 and extMediaInfos and extMediaInfos == 'true':
                             mediainfo = getAssetDetailsFromCache(event['event']['assetid'])
                             event['mediainfo'] = mediainfo
-                            xbmc.log('mediainfo = ' + str(mediainfo))
                     except:
                         pass
 
@@ -288,16 +286,16 @@ def listEpisodesFromSeason(series_id, season_id):
                     if js_showall == 'false':
                         if not skygo.parentalCheck(episode['parental_rating']['value'], play=False):   
                             continue
-                url = common.build_url({'action': 'playVod', 'vod_id': episode['id']})
                 li = xbmcgui.ListItem()
                 li.setProperty('IsPlayable', 'true')
                 li.addContextMenuItems(getWatchlistContextItem({'type': 'Episode', 'data': episode}), replaceItems=False)
                 info, episode = getInfoLabel('Episode', episode)
                 li.setInfo('video', info)
-                li.setLabel('%02d. %s' % (info['episode'], info['title']))
+                li.setLabel(info['title'])
                 li.setArt({'poster': skygo.baseUrl + season['path'], 
                            'fanart': getHeroImage(data),
                            'thumb': skygo.baseUrl + episode['webplayer_config']['assetThumbnail']})
+                url = common.build_url({'action': 'playVod', 'vod_id': episode['id'], 'infolabels': info})
                 xbmcplugin.addDirectoryItem(handle=addon_handle, url=url,
                                             listitem=li, isFolder=False)
 
@@ -552,9 +550,10 @@ def listAssets(asset_list, isWatchlist=False):
                 if js_showall == 'false':
                     if not skygo.parentalCheck(item['data']['parental_rating']['value'], play=False):   
                         continue
-            info, item['data'] = getInfoLabel(item['type'], item['data'])
-            # xbmc.log( "Debug_Info Current item Element: %s" % (item) ) 
+            info, item['data'] = getInfoLabel(item['type'], item['data']) 
             li.setInfo('video', info)
+            item['url'] = item['url'] + ('&' if item['url'].find('?') > -1 else '?') + urllib.urlencode({'infolabels': info})
+            xbmc.log("skygo url = " + item['url'])
             li.setLabel(info['title'])         
             li.setArt({'poster': getPoster(item['data']), 'fanart': getHeroImage(item['data'])})           
         if item['type'] in ['Film']:

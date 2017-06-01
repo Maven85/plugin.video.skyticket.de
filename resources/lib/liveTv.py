@@ -3,16 +3,22 @@ import requests
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
+import ast
 from skygo import SkyGo
 
 addon_handle = int(sys.argv[1])
 addon = xbmcaddon.Addon()
 skygo = SkyGo()
 
-def playLiveTv(manifest_url, package_code):
+def playLiveTv(manifest_url, package_code, infolabels=''):
     #hardcoded apixId for live content
     apix_id = 'livechannel_127'
-    skygo.play(manifest_url, package_code, apix_id=apix_id)
+
+    info_tag = None
+    if infolabels != '':
+        info_tag = ast.literal_eval(infolabels)
+
+    skygo.play(manifest_url, package_code, info_tag=info_tag, apix_id=apix_id)
 
 def play_live_tv(epg_channel_id):
     # Get Current running event on channel
