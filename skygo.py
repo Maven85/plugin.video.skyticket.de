@@ -156,7 +156,7 @@ class SkyGo:
                     return True
                 return False
             elif response['resultMessage'] == 'KO':
-                xbmcgui.Dialog().notification('Login Fehler', 'Login fehlgeschlagen. Bitte Login Daten überpruefen', icon=xbmcgui.NOTIFICATION_ERROR)
+                xbmcgui.Dialog().notification('Login Fehler', 'Login fehlgeschlagen. Bitte Login-daten überprüfen.', icon=xbmcgui.NOTIFICATION_ERROR)
                 return False
             elif response['resultCode'] == 'T_100':
                 # Activate Session with new test if user is logged in
@@ -181,7 +181,7 @@ class SkyGo:
                 if self.login(email, password, forceLogin=True, askKillSession=False):
                     addon.setSetting('password', password)
                     addon.setSetting('login_acc', email)
-                    xbmcgui.Dialog().notification('Login erfolgreich', 'Angemeldet als ' + email, icon=xbmcgui.NOTIFICATION_INFO)
+                    xbmcgui.Dialog().notification('Login erfolgreich', 'Angemeldet als "' + email + '".', icon=xbmcgui.NOTIFICATION_INFO)
                 else:
                     addon.setSetting('password', '')
                     addon.setSetting('login_acc', '')
@@ -314,7 +314,7 @@ class SkyGo:
         
         #Jugendschutz
         if not self.parentalCheck(parental_rating, play=True):
-            xbmcgui.Dialog().notification('SkyGo - FSK ' + str(parental_rating), 'Keine Berechtigung zum Abspielen dieses Eintrages', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('SkyGo - FSK ' + str(parental_rating), 'Keine Berechtigung zum Abspielen dieses Eintrags.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             return False
 
         if self.login(username, password):
@@ -337,7 +337,7 @@ class SkyGo:
                 # Start Playing
                 xbmcplugin.setResolvedUrl(addon_handle, True, listitem=li)
             else:
-                xbmcgui.Dialog().notification('SkyGo Fehler', 'Keine Berechtigung zum Abspielen dieses Eintrages', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+                xbmcgui.Dialog().notification('SkyGo Fehler', 'Keine Berechtigung zum Abspielen dieses Eintrags', xbmcgui.NOTIFICATION_ERROR, 2000, True)
         else:
-            xbmcgui.Dialog().notification('SkyGo Fehler', 'Fehler beim Login', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('SkyGo Fehler', 'Fehler beim Login.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             print 'Fehler beim Einloggen'
