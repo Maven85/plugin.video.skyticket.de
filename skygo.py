@@ -127,7 +127,7 @@ class SkyGo:
         print response
         return response
 
-    def login(self, username, password, forceLogin=False, askKillSession=True):
+    def login(self, username=username, password=password, forceLogin=False, askKillSession=True):
         # If already logged in and active session everything is fine
         if forceLogin or not self.isLoggedIn():
             #remove old cookies
