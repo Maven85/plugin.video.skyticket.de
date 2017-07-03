@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
   <category label="Login">
-      <setting id="email" type="text" label="E-Mail" default="" />
-      <setting id="password" type="text" option="hidden" label="Passwort" default="" />
+      <setting id="set_login" type="action" label="Anmelden..." action="RunPlugin(plugin://plugin.video.skygo.de/?action=login)" option="close"/>
+      <setting id="login_acc" type="text" label="Angemeldet als" enable="eq(-100,true)" default="" subsetting="true"/>
       <setting id="autoKillSession" type="bool" default="false" label="Andere Sessions automatisch beenden"></setting>
   </category>
   <category label="Jugendschutz">
@@ -14,8 +14,8 @@
   <category label="Sonstiges">
       <setting id="enable_customlogos" type="bool" label="Verwende eigene Senderlogos" default="false" />
       <setting id="logoPath" type="folder" default="" visible="!eq(-1,false)" label="Pfad zu den Logos" />
-      <setting id="lookup_tmdb_data" type="bool" label="Scrappe User-Rating und Film-Poster von TMDb" default="true" />
-      <setting id="channel_name_first" type="bool" label="Anzeige Live-TV: Sendername zuerst anzeigen?" default="true" />
+      <setting id="lookup_tmdb_data" type="bool" label="Lade die Bewertung und Filmposter von TMDb" default="true" />
+      <setting id="channel_name_first" type="bool" label="Live-TV: Sendername zuerst anzeigen?" default="true" />
       <setting id="enable_extended_mediainfos" type="bool" label="Anzeige von zusätzlichen Medieninformationen" default="false" />
   </category>
 </settings>

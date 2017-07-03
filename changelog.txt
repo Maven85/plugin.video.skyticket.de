@@ -1,3 +1,5 @@
+1.10.0
+- Passwortverschlüsselung
 1.9.9
 - Infolabels als URL-Parameter
 1.9.8

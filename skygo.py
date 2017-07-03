@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import sys
 import base64
 import struct
@@ -10,6 +12,8 @@ import time
 import pickle
 import os
 import xml.etree.ElementTree as ET
+from pyDes import *
+import uuid
 
 import xbmc
 import xbmcgui
@@ -24,6 +28,9 @@ addon_handle = int(sys.argv[1])
 autoKillSession = addon.getSetting('autoKillSession')
 username = addon.getSetting('email')
 password = addon.getSetting('password')
+if len(password) == 4:
+    addon.setSetting('password', '')
+
 print autoKillSession
 datapath = xbmc.translatePath(addon.getAddonInfo('profile'))
 cookiePath = datapath + 'COOKIES'
@@ -37,7 +44,6 @@ license_url = 'https://wvguard.sky.de/WidevineLicenser/WidevineLicenser|User-Age
 license_type = 'com.widevine.alpha'
 android_deviceid = ''
 if platform == osAndroid:
-    import uuid
     license_url = ''
     license_type = 'com.microsoft.playready'
             
@@ -114,17 +120,16 @@ class SkyGo:
         if not re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$", username):
             login = "customerCode="+username
 
-        r = self.session.get("https://www.skygo.sky.de/SILK/services/public/session/login?version=12354&platform=web&product=SG&"+login+"&password="+password+"&remMe=true")
+        r = self.session.get("https://www.skygo.sky.de/SILK/services/public/session/login?version=12354&platform=web&product=SG&"+login+"&password="+self.decode(password)+"&remMe=true")
         #Parse jsonp
         response = r.text[3:-1]
         response = json.loads(response)
         print response
         return response
 
-    def login(self):
-
+    def login(self, username, password, forceLogin=False, askKillSession=True):
         # If already logged in and active session everything is fine
-        if not self.isLoggedIn():
+        if forceLogin or not self.isLoggedIn():
             #remove old cookies
             self.session.cookies.clear_session_cookies()
             response = self.sendLogin(username, password)
@@ -132,11 +137,11 @@ class SkyGo:
             # if login is correct but other session is active ask user if other session should be killed - T_227=SkyGoExtra
             if response['resultCode'] in ['T_206', 'T_227']:
                 kill_session = False
-                if autoKillSession == 'true':
+                if autoKillSession == 'true' or askKillSession == False:
                     kill_session = True
 
                 if not kill_session:
-                    kill_session = xbmcgui.Dialog().yesno('Sie sind bereits eingeloggt!','Sie sind bereits auf einem anderen Geraet oder mit einem anderen Browser eingeloggt. Wollen Sie die bestehende Sitzung beenden und sich jetzt hier neu anmelden?')
+                    kill_session = xbmcgui.Dialog().yesno('Sie sind bereits eingeloggt!','Sie sind bereits auf einem anderen Gerät oder mit einem anderen Browser eingeloggt. Wollen Sie die bestehende Sitzung beenden und sich jetzt hier neu anmelden?')
 
                 if kill_session:
                     # Kill all Sessions (including ours)
@@ -151,7 +156,7 @@ class SkyGo:
                     return True
                 return False
             elif response['resultMessage'] == 'KO':
-                xbmcgui.Dialog().notification('Login Fehler', 'Login fehlgeschlagen. Bitte Login Daten ueberpruefen', icon=xbmcgui.NOTIFICATION_ERROR)
+                xbmcgui.Dialog().notification('Login Fehler', 'Login fehlgeschlagen. Bitte Login Daten überpruefen', icon=xbmcgui.NOTIFICATION_ERROR)
                 return False
             elif response['resultCode'] == 'T_100':
                 # Activate Session with new test if user is logged in
@@ -162,6 +167,50 @@ class SkyGo:
 
         # If any case is not matched return login failed
         return False
+    
+    def setLogin(self):    
+        keyboard = xbmc.Keyboard(username, 'Kundennummer / E-Mail-Adresse')
+        keyboard.doModal()
+        if keyboard.isConfirmed() and keyboard.getText():
+            email = keyboard.getText()
+            password = self.setLoginPW()
+            if password != '':            
+                addon.setSetting('email', email)
+                password = self.encode(password)
+
+                if self.login(email, password, forceLogin=True, askKillSession=False):
+                    addon.setSetting('password', password)
+                    addon.setSetting('login_acc', email)
+                    xbmcgui.Dialog().notification('Login erfolgreich', 'Angemeldet als ' + email, icon=xbmcgui.NOTIFICATION_INFO)
+                else:
+                    addon.setSetting('password', '')
+                    addon.setSetting('login_acc', '')
+    
+    def setLoginPW(self):
+        keyboard = xbmc.Keyboard('', 'Passwort', True)
+        keyboard.doModal(60000)
+        if keyboard.isConfirmed() and keyboard.getText() and len(keyboard.getText()) == 4:
+            password = keyboard.getText()
+            return password
+        return ''   
+    
+    def encode(self, data):
+        k = triple_des(self.getmac(), CBC, "\0\0\0\0\0\0\0\0", padmode=PAD_PKCS5)
+        d = k.encrypt(data)
+        return base64.b64encode(d)    
+    
+    def decode(self, data):
+        if not data:
+            return ''
+        k = triple_des(self.getmac(), CBC, "\0\0\0\0\0\0\0\0", padmode=PAD_PKCS5)
+        d = k.decrypt(base64.b64decode(data))
+        return d    
+    
+    def getmac(self):
+        mac = uuid.getnode()
+        if (mac >> 40) % 2:
+            mac = node()
+        return uuid.uuid5(uuid.NAMESPACE_DNS, str(mac)).bytes
 
     def getPlayInfo(self, id='', url=''):
         ns = {'media': 'http://search.yahoo.com/mrss/', 'skyde': 'http://sky.de/mrss_extensions/'}
@@ -268,7 +317,7 @@ class SkyGo:
             xbmcgui.Dialog().notification('SkyGo - FSK ' + str(parental_rating), 'Keine Berechtigung zum Abspielen dieses Eintrages', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             return False
 
-        if self.login():
+        if self.login(username, password):
             if self.may_play(package_code):
                 init_data = None
                 # create init data for license acquiring
@@ -290,5 +339,5 @@ class SkyGo:
             else:
                 xbmcgui.Dialog().notification('SkyGo Fehler', 'Keine Berechtigung zum Abspielen dieses Eintrages', xbmcgui.NOTIFICATION_ERROR, 2000, True)
         else:
-            xbmcgui.Dialog().notification('SkyGo Fehler', 'Fehler bei Login', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('SkyGo Fehler', 'Fehler beim Login', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             print 'Fehler beim Einloggen'
