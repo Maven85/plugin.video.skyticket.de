@@ -13,6 +13,7 @@ import pickle
 import os
 import xml.etree.ElementTree as ET
 from pyDes import *
+from platform import node
 import uuid
 
 import xbmc
@@ -28,8 +29,6 @@ addon_handle = int(sys.argv[1])
 autoKillSession = addon.getSetting('autoKillSession')
 username = addon.getSetting('email')
 password = addon.getSetting('password')
-if len(password) == 4:
-    addon.setSetting('password', '')
 
 print autoKillSession
 datapath = xbmc.translatePath(addon.getAddonInfo('profile'))
@@ -341,3 +340,10 @@ class SkyGo:
         else:
             xbmcgui.Dialog().notification('SkyGo Fehler', 'Fehler beim Login.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             print 'Fehler beim Einloggen'
+
+if len(password) == 4:
+    skygo = SkyGo()
+    password = skygo.encode(password)
+    addon.setSetting('password', password)
+    if skygo.login(username, password, forceLogin=True, askKillSession=False):        
+        addon.setSetting('login_acc', username)
