@@ -7,8 +7,8 @@ import urllib
 from crypto.cipher import aes_cbc
 #pycrypto
 #from Crypto.Cipher import AES
-from skygo import SkyGo
-skygo = SkyGo()
+from skyticket import SkyTicket
+skyticket = SkyTicket()
 
 secret_key = 'XABD-FHIM-GDFZ-OBDA-URDG-TTRI'
 aes_key = ['826cf604accd0e9d61c4aa03b7d7c890', 'da1553b1515bd6f5f48e250a2074d30c']
@@ -18,8 +18,8 @@ def getClipToken(content):
     if content == 'ENTITLED USER' or content == 'SUBSCRIBED USER':
         clipType = 'NOTFREE'
     timestamp = str(time.time()).replace('.', '')
-    url = 'https://www.skygo.sky.de/SILK/services/public/clipToken?clipType=' + clipType + '&product=SG&platform=web&version=12354=&_' + timestamp
-    r = skygo.session.get(url)
+    url = 'https://skyticket.sky.de/SILK/services/public/clipToken?clipType=' + clipType + '&product=ST&platform=web&version=12354=&_' + timestamp
+    r = skyticket.session.get(url)
     return json.loads(r.text[3:len(r.text)-1])
 
 def buildClipUrl(url, token):
@@ -35,11 +35,11 @@ def buildClipUrl(url, token):
     return url + '?' + query
 
 def playClip(clip_id):
-    if skygo.login():
-        clip_info = skygo.getClipDetails(clip_id)
+    if skyticket.login():
+        clip_info = skyticket.getClipDetails(clip_id)
         token = getClipToken(clip_info['content_subscription'])
         manifest = buildClipUrl(clip_info['videoUrlMSSProtected'], token)
         
-        skygo.play(manifest, clip_info['package_code'])
+        skyticket.play(manifest, clip_info['package_code'])
 
 

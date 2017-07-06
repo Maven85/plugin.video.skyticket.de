@@ -3,12 +3,12 @@ import urlparse
 import resources.lib.vod as vod
 import resources.lib.clips as clips
 import resources.lib.liveTv as liveTv
-from skygo import SkyGo
+from skyticket import SkyTicket
 
 import navigation as nav
 import watchlist
 
-skygo = SkyGo()
+skyticket = SkyTicket()
 addon_handle = int(sys.argv[1])
 plugin_base_url = sys.argv[0]
 params = dict(urlparse.parse_qsl(sys.argv[2][1:]))
@@ -70,7 +70,7 @@ if 'action' in params:
         nav.showParentalSettings()
     
     elif params['action'] == 'login':
-        skygo.setLogin()
+        skyticket.setLogin()
 
 else:
     nav.rootDir()

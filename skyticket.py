@@ -39,7 +39,7 @@ osAndroid = 1
 if xbmc.getCondVisibility('system.platform.android'):
     platform = osAndroid
 
-license_url = 'https://wvguard.sky.de/WidevineLicenser/WidevineLicenser|User-Agent=Mozilla%2F5.0%20(X11%3B%20Linux%20x86_64)%20AppleWebKit%2F537.36%20(KHTML%2C%20like%20Gecko)%20Chrome%2F49.0.2623.87%20Safari%2F537.36&Referer=http%3A%2F%2Fwww.skygo.sky.de%2Ffilm%2Fscifi--fantasy%2Fjupiter-ascending%2Fasset%2Ffilmsection%2F144836.html&Content-Type=|R{SSM}|'
+license_url = 'https://wvguard.sky.de/WidevineLicenser/WidevineLicenser|User-Agent=Mozilla%2F5.0%20(X11%3B%20Linux%20x86_64)%20AppleWebKit%2F537.36%20(KHTML%2C%20like%20Gecko)%20Chrome%2F49.0.2623.87%20Safari%2F537.36&Referer=https%3A%2F%2Fskyticket.sky.de%2Ffilm%2Fscifi--fantasy%2Fjupiter-ascending%2Fasset%2Ffilmsection%2F144836.html&Content-Type=|R{SSM}|'
 license_type = 'com.widevine.alpha'
 android_deviceid = ''
 if platform == osAndroid:
@@ -62,10 +62,10 @@ def getInputstreamAddon():
         
     return None
 
-class SkyGo:
-    """Sky Go Class"""
+class SkyTicket:
+    """Sky Ticket Class"""
 
-    baseUrl = "https://www.skygo.sky.de"
+    baseUrl = "https://skyticket.sky.de"
     entitlements = []
 
 
@@ -90,7 +90,7 @@ class SkyGo:
 
     def isLoggedIn(self):
         """Check if User is still logged in with the old cookies"""
-        r = self.session.get('https://www.skygo.sky.de/SILK/services/public/user/getdata?product=SG&platform=web&version=12354')
+        r = self.session.get('https://skyticket.sky.de/SILK/services/public/user/getdata?product=ST&platform=web&version=12354')
         #Parse json
         response = r.text[3:-1]
         response = json.loads(response)
@@ -98,7 +98,7 @@ class SkyGo:
         print response
 
         if response['resultMessage'] == 'OK':
-            self.sessionId = response['skygoSessionId']
+            self.sessionId = response['skyticketSessionId']
             self.entitlements = response['entitlements']
             print "User still logged in"
             return True
@@ -111,7 +111,7 @@ class SkyGo:
 
     def killSessions(self):
         # Kill other sessions
-        r = self.session.get('https://www.skygo.sky.de/SILK/services/public/session/kill/web?version=12354&platform=web&product=SG')
+        r = self.session.get('https://skyticket.sky.de/SILK/services/public/session/kill/web?version=12354&platform=web&product=ST')
 
     def sendLogin(self, username, password):
         # Try to login
@@ -119,7 +119,7 @@ class SkyGo:
         if not re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$", username):
             login = "customerCode="+username
 
-        r = self.session.get("https://www.skygo.sky.de/SILK/services/public/session/login?version=12354&platform=web&product=SG&"+login+"&password="+self.decode(password)+"&remMe=true")
+        r = self.session.get("https://skyticket.sky.de/SILK/services/public/session/login?version=12354&platform=web&product=ST&"+login+"&password="+self.decode(password)+"&remMe=true")
         #Parse jsonp
         response = r.text[3:-1]
         response = json.loads(response)
@@ -133,7 +133,7 @@ class SkyGo:
             self.session.cookies.clear_session_cookies()
             response = self.sendLogin(username, password)
 
-            # if login is correct but other session is active ask user if other session should be killed - T_227=SkyGoExtra
+            # if login is correct but other session is active ask user if other session should be killed - T_227=SkyTicketExtra
             if response['resultCode'] in ['T_206', 'T_227']:
                 kill_session = False
                 if autoKillSession == 'true' or askKillSession == False:
@@ -212,11 +212,11 @@ class SkyGo:
         return uuid.uuid5(uuid.NAMESPACE_DNS, str(mac)).bytes
 
     def getPlayInfo(self, id='', url=''):
-        ns = {'media': 'http://search.yahoo.com/mrss/', 'skyde': 'http://sky.de/mrss_extensions/'}
+        ns = {'media': 'https://search.yahoo.com/mrss/', 'skyde': 'https://sky.de/mrss_extensions/'}
 
         # If no url is given we assume that the url hast to be build with the id
         if url == '':
-            url = self.baseUrl+"/sg/multiplatform/web/xml/player_playlist/asset/" + str(id) + ".xml"
+            url = self.baseUrl+"/st/multiplatform/web/xml/player_playlist/asset/" + str(id) + ".xml"
 
         r = requests.get(url)
         tree = ET.ElementTree(ET.fromstring(r.text.encode('utf-8')))
@@ -233,8 +233,8 @@ class SkyGo:
         now = datetime.datetime.now()
         current_date = now.strftime("%d.%m.%Y")
         # Get Epg information
-        print 'http://www.skygo.sky.de/epgd/sg/web/eventList/'+current_date+'/'+epg_channel_id+'/'
-        r = requests.get('http://www.skygo.sky.de/epgd/sg/web/eventList/'+current_date+'/'+epg_channel_id+'/')
+        print 'https://skyticket.sky.de/epgd/st/web/eventList/'+current_date+'/'+epg_channel_id+'/'
+        r = requests.get('https://skyticket.sky.de/epgd/st/web/eventList/'+current_date+'/'+epg_channel_id+'/')
         events = r.json()[epg_channel_id]
         for event in events:
             start_date = datetime.datetime(*(time.strptime(event['startDate'] + ' ' + event['startTime'], '%d.%m.%Y %H:%M')[0:6]))
@@ -248,15 +248,15 @@ class SkyGo:
     def getEventPlayInfo(self, event_id, epg_channel_id):
         # If not Sky news then get details id else use hardcoded playinfo_url
         if epg_channel_id != '17':
-            r = requests.get('http://www.skygo.sky.de/epgd/sg/web/eventDetail/'+event_id+'/'+epg_channel_id+'/')
+            r = requests.get('https://skyticket.sky.de/epgd/st/web/eventDetail/'+event_id+'/'+epg_channel_id+'/')
             event_details_link = r.json()['detailPage']
             # Extract id from details link
             p = re.compile('/([0-9]*)\.html', re.IGNORECASE)
             m = re.search(p, event_details_link)
             playlist_id = m.group(1)
-            playinfo_url = self.baseUrl+'/sg/multiplatform/web/xml/player_playlist/asset/' + playlist_id + '.xml'
+            playinfo_url = self.baseUrl+'/st/multiplatform/web/xml/player_playlist/asset/' + playlist_id + '.xml'
         else:
-            playinfo_url = self.baseUrl+'/sg/multiplatform/web/xml/player_playlist/ssn/127.xml'
+            playinfo_url = self.baseUrl+'/st/multiplatform/web/xml/player_playlist/ssn/127.xml'
 
         return self.getPlayInfo(url=playinfo_url)
 
@@ -264,12 +264,12 @@ class SkyGo:
         return entitlement in self.entitlements
 
     def getAssetDetails(self, asset_id):
-        url = 'http://www.skygo.sky.de/sg/multiplatform/web/json/details/asset/' + str(asset_id) + '.json'       
+        url = 'https://skyticket.sky.de/st/multiplatform/web/json/details/asset/' + str(asset_id) + '.json'       
         r = self.session.get(url)
         return r.json()['asset']
 
     def getClipDetails(self, clip_id):
-        url = 'http://www.skygo.sky.de/sg/multiplatform/web/json/details/clip/' + str(clip_id) + '.json'       
+        url = 'https://skyticket.sky.de/st/multiplatform/web/json/details/clip/' + str(clip_id) + '.json'       
         r = self.session.get(url)
         return r.json()['detail']
 
@@ -308,12 +308,12 @@ class SkyGo:
         # Inputstream settings
         is_addon = getInputstreamAddon()
         if not is_addon:
-            xbmcgui.Dialog().notification('SkyGo Fehler', 'Addon "inputstream.adaptive" fehlt!', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('SkyTicket Fehler', 'Addon "inputstream.adaptive" fehlt!', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             return False
         
         #Jugendschutz
         if not self.parentalCheck(parental_rating, play=True):
-            xbmcgui.Dialog().notification('SkyGo - FSK ' + str(parental_rating), 'Keine Berechtigung zum Abspielen dieses Eintrags.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('SkyTicket - FSK ' + str(parental_rating), 'Keine Berechtigung zum Abspielen dieses Eintrags.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             return False
 
         if self.login(username, password):
@@ -336,14 +336,7 @@ class SkyGo:
                 # Start Playing
                 xbmcplugin.setResolvedUrl(addon_handle, True, listitem=li)
             else:
-                xbmcgui.Dialog().notification('SkyGo Fehler', 'Keine Berechtigung zum Abspielen dieses Eintrags', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+                xbmcgui.Dialog().notification('SkyTicket Fehler', 'Keine Berechtigung zum Abspielen dieses Eintrags', xbmcgui.NOTIFICATION_ERROR, 2000, True)
         else:
-            xbmcgui.Dialog().notification('SkyGo Fehler', 'Fehler beim Login.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('SkyTicket Fehler', 'Fehler beim Login.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             print 'Fehler beim Einloggen'
-
-if len(password) == 4:
-    skygo = SkyGo()
-    password = skygo.encode(password)
-    addon.setSetting('password', password)
-    if skygo.login(username, password, forceLogin=True, askKillSession=False):        
-        addon.setSetting('login_acc', username)

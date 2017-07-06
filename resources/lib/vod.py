@@ -1,9 +1,9 @@
 import sys
 import ast
-from skygo import SkyGo
+from skyticket import SkyTicket
 import navigation as nav
 
-skygo = SkyGo()
+skyticket = SkyTicket()
 
 def playAsset(asset_id, infolabels=''):
     #get asset details and build infotag from it
@@ -18,4 +18,4 @@ def playAsset(asset_id, infolabels=''):
     else:
         info_tag, asset_info = nav.getInfoLabel(asset_info.get('type', ''), asset_info)
 
-    skygo.play(manifest_url, package_code=asset_info['package_code'], info_tag=info_tag, apix_id=str(asset_info['event_id']))
+    skyticket.play(manifest_url, package_code=asset_info['package_code'], info_tag=info_tag, apix_id=str(asset_info['event_id']))

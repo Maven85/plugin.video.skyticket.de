@@ -9,7 +9,7 @@ import datetime
 import time
 import xml.etree.ElementTree as ET
 import resources.lib.common as common
-from skygo import SkyGo
+from skyticket import SkyTicket
 import watchlist
 import re
 import urllib
@@ -30,7 +30,7 @@ TMDBCache = StorageServer.StorageServer(addon.getAddonInfo('name') + '.TMDBdata'
 extMediaInfos = addon.getSetting('enable_extended_mediainfos')
 addon_handle = int(sys.argv[1])
 icon_file = xbmc.translatePath(addon.getAddonInfo('path')+'/icon.png').decode('utf-8')
-skygo = SkyGo()
+skyticket = SkyTicket()
 htmlparser = HTMLParser()
 
 #Blacklist: diese nav_ids nicht anzeigen
@@ -44,7 +44,7 @@ nav_force = [35, 36, 37, 161]
 js_showall = xbmcaddon.Addon().getSetting('js_showall')
  
 def getNav():
-    feed = urllib2.urlopen('http://www.skygo.sky.de/sg/multiplatform/ipad/json/navigation.xml')
+    feed = urllib2.urlopen('https://skyticket.sky.de/st/multiplatform/ipad/json/navigation.xml')
     nav = ET.parse(feed)
     return nav.getroot()
      
@@ -102,17 +102,17 @@ def showParentalSettings():
             else:
                 xbmcaddon.Addon().setSetting('js_showall', 'false')
     else:
-        xbmcgui.Dialog().notification('SkyGo - Jugendschutz', 'Fehlerhafte PIN', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+        xbmcgui.Dialog().notification('SkyTicket - Jugendschutz', 'Fehlerhafte PIN', xbmcgui.NOTIFICATION_ERROR, 2000, True)
     
 def getHeroImage(data):
     if 'main_picture' in data:
         for pic in data['main_picture']['picture']:
             if pic['type'] == 'hero_img':
-                return skygo.baseUrl + pic['path']+'/'+pic['file']
+                return skyticket.baseUrl + pic['path']+'/'+pic['file']
     if 'item_image' in data:
-        return skygo.baseUrl + data['item_image']
+        return skyticket.baseUrl + data['item_image']
     if 'picture' in data:
-        return skygo.baseUrl + data['picture']
+        return skyticket.baseUrl + data['picture']
 
     return ''
 
@@ -122,13 +122,13 @@ def getPoster(data):
         if img:
             return img
     if data.get('dvd_cover', '') != '':
-        return skygo.baseUrl + data['dvd_cover']['path'] + '/' + data['dvd_cover']['file']
+        return skyticket.baseUrl + data['dvd_cover']['path'] + '/' + data['dvd_cover']['file']
     if data.get('item_preview_image', '') != '':
-        return skygo.baseUrl + data['item_preview_image']
+        return skyticket.baseUrl + data['item_preview_image']
     if data.get('picture', '') != '':
-        return skygo.baseUrl + data['picture']
+        return skyticket.baseUrl + data['picture']
     if data.get('logo', '') != '':
-        return skygo.baseUrl + data['logo']
+        return skyticket.baseUrl + data['logo']
 
     return ''
 
@@ -141,7 +141,7 @@ def getChannelLogo(data):
             logosize = logo['size'][:logo['size'].find('x')]
             if int(logosize) > size:
                 size = int(logosize)
-                logopath = skygo.baseUrl + basepath + logo['imageFile']
+                logopath = skyticket.baseUrl + basepath + logo['imageFile']
     return logopath
 
 def getLocalChannelLogo(channel_name):   
@@ -161,8 +161,8 @@ def search():
     if term == '':
         return
     term = term.replace(' ', '+')
-    url = 'https://www.skygo.sky.de/SILK/services/public/search/web?searchKey=' + term + '&version=12354&platform=web&product=SG'
-    r = skygo.session.get(url)
+    url = 'https://skyticket.sky.de/SILK/services/public/search/web?searchKey=' + term + '&version=12354&platform=web&product=ST'
+    r = skyticket.session.get(url)
     data = json.loads(r.text[3:len(r.text)-1])
     listitems = []
     for item in data['assetListResult']:
@@ -245,7 +245,7 @@ def listLiveTvChannels(channeldir_name):
             listAssets(sorted(details.values(), key=lambda k:k['data']['channel']['name']))
 
 def getlistLiveChannelData(channel = ''):
-    url = 'http://www.skygo.sky.de/epgd/sg/ipad/excerpt/'
+    url = 'https://skyticket.sky.de/epgd/st/ipad/excerpt/'
     data = requests.get(url).json()
     data = [json for json in data if json['tabName'] != 'welt']
     
@@ -255,7 +255,7 @@ def getlistLiveChannelData(channel = ''):
             for event in tab['eventList']:
                 channel_list.append(event['channel']['name'])
 
-        url = 'http://www.skygo.sky.de/epgd/sg/web/excerpt/'        
+        url = 'https://skyticket.sky.de/epgd/st/web/excerpt/'        
         data_web = requests.get(url).json()
         data_web = [json for json in data_web if json['tabName'] != 'welt']
         for tab_web in data_web:
@@ -274,7 +274,7 @@ def getlistLiveChannelData(channel = ''):
     return sorted(data, key=lambda k: k['tabName'])    
 
 def listEpisodesFromSeason(series_id, season_id):
-    url = skygo.baseUrl + '/sg/multiplatform/web/json/details/series/' + str(series_id) + '_global.json'
+    url = skyticket.baseUrl + '/st/multiplatform/web/json/details/series/' + str(series_id) + '_global.json'
     r = requests.get(url)
     data = r.json()['serieRecap']['serie']
     xbmcplugin.setContent(addon_handle, 'episodes')
@@ -284,7 +284,7 @@ def listEpisodesFromSeason(series_id, season_id):
                 #Check Altersfreigabe / Jugendschutzeinstellungen
                 if 'parental_rating' in episode:
                     if js_showall == 'false':
-                        if not skygo.parentalCheck(episode['parental_rating']['value'], play=False):   
+                        if not skyticket.parentalCheck(episode['parental_rating']['value'], play=False):   
                             continue
                 li = xbmcgui.ListItem()
                 li.setProperty('IsPlayable', 'true')
@@ -292,9 +292,9 @@ def listEpisodesFromSeason(series_id, season_id):
                 info, episode = getInfoLabel('Episode', episode)
                 li.setInfo('video', info)
                 li.setLabel(info['title'])
-                li.setArt({'poster': skygo.baseUrl + season['path'], 
+                li.setArt({'poster': skyticket.baseUrl + season['path'], 
                            'fanart': getHeroImage(data),
-                           'thumb': skygo.baseUrl + episode['webplayer_config']['assetThumbnail']})
+                           'thumb': skyticket.baseUrl + episode['webplayer_config']['assetThumbnail']})
                 url = common.build_url({'action': 'playVod', 'vod_id': episode['id'], 'infolabels': info})
                 xbmcplugin.addDirectoryItem(handle=addon_handle, url=url,
                                             listitem=li, isFolder=False)
@@ -308,7 +308,7 @@ def listEpisodesFromSeason(series_id, season_id):
     xbmcplugin.endOfDirectory(addon_handle, cacheToDisc=True)   
 
 def listSeasonsFromSeries(series_id):
-    url = skygo.baseUrl + '/sg/multiplatform/web/json/details/series/' + str(series_id) + '_global.json'
+    url = skyticket.baseUrl + '/st/multiplatform/web/json/details/series/' + str(series_id) + '_global.json'
     r = requests.get(url)
     data = r.json()['serieRecap']['serie']
     xbmcplugin.setContent(addon_handle, 'seasons')
@@ -317,7 +317,7 @@ def listSeasonsFromSeries(series_id):
         label = '%s - Staffel %02d' % (data['title'], season['nr'])
         li = xbmcgui.ListItem(label=label)
         li.setProperty('IsPlayable', 'false')
-        li.setArt({'poster': skygo.baseUrl + season['path'], 
+        li.setArt({'poster': skyticket.baseUrl + season['path'], 
                    'fanart': getHeroImage(data)})
         li.setInfo('video', {'plot': data['synopsis'].replace('\n', '').strip()})
         xbmcplugin.addDirectoryItem(handle=addon_handle, url=url,
@@ -495,9 +495,16 @@ def getInfoLabel(asset_type, item_data):
             channel = '[COLOR blue] | ' + item_data['channel']['name'] + '[/COLOR]'
             info['title'] += channel               
     if asset_type == 'searchresult':
-        info['plot'] = data.get('description', '')
-        info['year'] = data.get('year', '')
-        info['genre'] = data.get('category', '')
+        if extMediaInfos and extMediaInfos == 'false':
+            info['plot'] = data.get('description', '')
+            info['year'] = data.get('year', '')
+            info['genre'] = data.get('category', '')
+        if data.get('type', {}) == 'Film':
+            asset_type = 'Film'
+        elif data.get('type', {}) == 'Episode':
+            asset_type = 'Episode'
+            info['plot'] = 'Folge: ' + data.get('title', '') + '\n\n' + data.get('synopsis', '').replace('\n', '').strip()
+            info['title'] = '%1dx%02d. %s' % (data.get('season_nr', ''), data.get('episode_nr', ''), data.get('serie_title', ''))
     if asset_type == 'Film':
         info['mediatype'] = 'movie'
         if xbmcaddon.Addon().getSetting('lookup_tmdb_data') == 'true' and not data.get('title', '') == '': 
@@ -507,7 +514,7 @@ def getInfoLabel(asset_type, item_data):
                 TMDb_Data = getTMDBDataFromCache(title, info['year'])
             else:
                 TMDb_Data = getTMDBDataFromCache(title)
-            # xbmc.log('Debug-Info: TMDb_Data: %s' % TMDb_Data)
+
             if TMDb_Data['rating'] is not None:
                 info['rating'] = str(TMDb_Data['rating'])
                 info['plot'] = 'User-Rating: '+ info['rating'] + ' / 10 (from TMDb) \n\n' + info['plot']
@@ -524,7 +531,7 @@ def getInfoLabel(asset_type, item_data):
         info['tvshowtitle'] = data.get('serie_title', '')
         if info['title'] == '':
             info['title'] = '%s - S%02dE%02d' % (data.get('serie_title', ''), data.get('season_nr', 0), data.get('episode_nr', 0))
-    # xbmc.log( "Debug_Info Current info Element: %s" % (info) ) 
+
     return info, item_data
 
 def getWatchlistContextItem(item, delete=False):
@@ -548,9 +555,9 @@ def listAssets(asset_list, isWatchlist=False):
             #Check Altersfreigabe / Jugendschutzeinstellungen
             if 'parental_rating' in item['data']:
                 if js_showall == 'false':
-                    if not skygo.parentalCheck(item['data']['parental_rating']['value'], play=False):   
+                    if not skyticket.parentalCheck(item['data']['parental_rating']['value'], play=False):   
                         continue
-            info, item['data'] = getInfoLabel(item['type'], item['data']) 
+            info, item['data'] = getInfoLabel(item['type'], item['data'])
             li.setInfo('video', info)
             item['url'] = item['url'] + ('&' if item['url'].find('?') > -1 else '?') + urllib.urlencode({'infolabels': info})
             li.setLabel(info['title'])         
@@ -560,9 +567,7 @@ def listAssets(asset_list, isWatchlist=False):
             if xbmcaddon.Addon().getSetting('lookup_tmdb_data') == 'true' and 'TMDb_poster_path' in item['data']:
                 poster_path = item['data']['TMDb_poster_path'] 
             else:
-                poster_path = getPoster(item['data'])
-            # xbmc.log('Debug-Info: Current Poster in item: %s' % getPoster(item['data']) ) 
-            # xbmc.log('Debug-Info: Current Poster in info: %s' % item['data']['TMDb_poster_path'] )    
+                poster_path = getPoster(item['data']) 
             li.setArt({'poster': poster_path})
         elif item['type'] in ['Series']:
             xbmcplugin.setContent(addon_handle, 'tvshows')
@@ -574,6 +579,11 @@ def listAssets(asset_list, isWatchlist=False):
             li.setArt({'thumb': getHeroImage(item['data'])})
         elif item['type'] == 'searchresult':          
             xbmcplugin.setContent(addon_handle, 'movies')
+            if xbmcaddon.Addon().getSetting('lookup_tmdb_data') == 'true' and 'TMDb_poster_path' in item['data']:
+                poster_path = item['data']['TMDb_poster_path'] 
+            else:
+                poster_path = getPoster(item['data'])
+            li.setArt({'poster': poster_path})
         elif item['type'] == ('live'):
             xbmcplugin.setContent(addon_handle, 'files')
             if 'TMDb_poster_path' in item['data']:
@@ -582,8 +592,8 @@ def listAssets(asset_list, isWatchlist=False):
                 poster = getPoster(item['data']['mediainfo'])
             else:
                 poster = getPoster(item['data']['channel'])
-            fanart = skygo.baseUrl + item['data']['event']['image'] if item['data']['channel']['name'].find('News') == -1 else skygo.baseUrl + '/bin/Picture/817/C_1_Picture_7179_content_4.jpg'
-            thumb = skygo.baseUrl + item['data']['event']['image'] if item['data']['channel']['name'].find('News') == -1 else getChannelLogo(item['data']['channel'])
+            fanart = skyticket.baseUrl + item['data']['event']['image'] if item['data']['channel']['name'].find('News') == -1 else skyticket.baseUrl + '/bin/Picture/817/C_1_Picture_7179_content_4.jpg'
+            thumb = skyticket.baseUrl + item['data']['event']['image'] if item['data']['channel']['name'].find('News') == -1 else getChannelLogo(item['data']['channel'])
             li.setArt({'poster': poster, 'fanart': fanart, 'thumb': thumb})
 
         #add contextmenu item for watchlist to playable content - not for live and clip content
@@ -604,7 +614,7 @@ def listAssets(asset_list, isWatchlist=False):
 def listPath(path):
     page = {}
     path = path.replace('ipad', 'web')
-    r = requests.get(skygo.baseUrl + path)
+    r = requests.get(skyticket.baseUrl + path)
     if r.status_code != 404:
         page = r.json()
     else:
@@ -656,7 +666,7 @@ def listPage(page_id):
         xbmcplugin.endOfDirectory(addon_handle, cacheToDisc=True)         
 
 def getAssetDetailsFromCache(asset_id):
-    return assetDetailsCache.cacheFunction(skygo.getAssetDetails, asset_id)
+    return assetDetailsCache.cacheFunction(skyticket.getAssetDetails, asset_id)
 
 def getTMDBDataFromCache(title, year = None, attempt = 1, content='movie'):
     return TMDBCache.cacheFunction(getTMDBData, title, year, attempt, content)
@@ -674,7 +684,7 @@ def getTMDBData(title, year=None, attempt = 1, content='movie'):
     
     try:
         #Define the moviedb Link zu download the json
-        host = 'http://api.themoviedb.org/3/search/%s?api_key=%s&language=%s&query=%s%s' % (content, tmdb_api, Language, movie, str_year)
+        host = 'https://api.themoviedb.org/3/search/%s?api_key=%s&language=%s&query=%s%s' % (content, tmdb_api, Language, movie, str_year)
         #Download and load the corresponding json
         data = json.load(urllib2.urlopen(host))
          
