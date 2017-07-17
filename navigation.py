@@ -192,53 +192,55 @@ def listLiveTvChannels(channeldir_name):
         if tab['tabName'].lower() == channeldir_name.lower():
             details = {}
             for event in tab['eventList']:
+                url = ''
+                manifest_url = ''
                 if event['event']['detailPage'].startswith("http"):
                     detail = event['event']['detailPage']
                 else:
                     detail = str(event['event']['cmsid'])
-                if 'assetid' not in event['event']:
-                    manifest_url = ''
-                    if 'mediaurl' in event['channel'] and event['channel']['mediaurl'].startswith('http'):
-                        manifest_url = event['channel']['mediaurl']
-
-                    if not manifest_url.startswith('http') or (extMediaInfos and extMediaInfos == 'true'):
-                        assetid_match = re.search('\/([0-9]*)\.html', event['event']['detailPage'])
-                        if assetid_match:
-                            assetid = 0
-                            try:
-                                assetid = int(assetid_match.group(1))
-                            except:
-                                pass
-                            try:
-                                if assetid > 0:
-                                    mediainfo = getAssetDetailsFromCache(assetid)
-                                    event['mediainfo'] = mediainfo
-                                    if not manifest_url.startswith('http'):
-                                        manifest_url = mediainfo['media_url']
-                                    if not manifest_url.startswith('http'):
-                                        continue
-                            except:
-                                if not manifest_url.startswith('http'):
-                                    continue
+                
+                if event['channel']['msMediaUrl'].startswith('http'):
+                    manifest_url = event['channel']['msMediaUrl']
                     url = common.build_url({'action': 'playLive', 'manifest_url': manifest_url, 'package_code': event['channel']['mobilepc']})
-                else:
-                    if event['channel']['msMediaUrl'].startswith('http'):
-                        manifest_url = event['channel']['msMediaUrl']
-                        url = common.build_url({'action': 'playLive', 'manifest_url': manifest_url, 'package_code': event['channel']['mobilepc']})
-                    else:                    
-                        url = common.build_url({'action': 'playVod', 'vod_id': event['event']['assetid']})
-                    
+                elif 'assetid' in event['event']:
                     try:
                         if event['event']['assetid'] > 0 and extMediaInfos and extMediaInfos == 'true':
                             mediainfo = getAssetDetailsFromCache(event['event']['assetid'])
                             event['mediainfo'] = mediainfo
                     except:
                         pass
-
+                    
+                    if not manifest_url.startswith('http'):        
+                        url = common.build_url({'action': 'playVod', 'vod_id': event['event']['assetid']})                                                      
+                        
+                if 'mediainfo' not in event and extMediaInfos and extMediaInfos == 'true':
+                    assetid_match = re.search('\/([0-9]*)\.html', event['event']['detailPage'])
+                    if assetid_match:
+                        assetid = 0
+                        try:
+                            assetid = int(assetid_match.group(1))
+                        except:
+                            pass
+                        try:
+                            if assetid > 0:
+                                mediainfo = getAssetDetailsFromCache(assetid)
+                                event['mediainfo'] = mediainfo
+                                if not manifest_url.startswith('http'):
+                                    manifest_url = mediainfo['media_url']
+                                if not manifest_url.startswith('http'):
+                                    continue
+                        except:
+                            if not manifest_url.startswith('http'):
+                                continue
+                
                 #zeige keine doppelten sender mit gleichem stream - nutze hd falls verfügbar
                 if detail != '':
                     if not detail in details.keys():                 
                         details[detail] = {'type': 'live', 'label': event['channel']['name'], 'url': url, 'data': event}
+                    elif details[detail]['url'] == '':
+                        newlabel = details[detail]['data']['channel']['name']
+                        event['channel']['name'] = newlabel
+                        details[detail] = {'type': 'live', 'label': newlabel, 'url': url, 'data': event}
                     elif details[detail]['data']['channel']['hd'] == 0 and event['channel']['hd'] == 1 and event['channel']['name'].find('+') == -1:
                         details[detail] = {'type': 'live', 'label': event['channel']['name'], 'url': url, 'data': event}
 
@@ -255,16 +257,16 @@ def getlistLiveChannelData(channel = ''):
             for event in tab['eventList']:
                 channel_list.append(event['channel']['name'])
 
-        url = 'https://skyticket.sky.de/epgd/st/web/excerpt/'        
-        data_web = requests.get(url).json()
-        data_web = [json for json in data_web if json['tabName'] != 'welt']
-        for tab_web in data_web:
-            for event_web in tab_web['eventList']:
-                if event_web['channel']['name'] not in channel_list:
-                    channel_list.append(event_web['channel']['name'])
-                    for tab in data:
-                        if tab['tabName'] == tab_web['tabName']:
-                            tab['eventList'].append(event_web)
+        #url = 'https://skyticket.sky.de/epgd/st/web/excerpt/'        
+        #data_web = requests.get(url).json()
+        #data_web = [json for json in data_web if json['tabName'] != 'welt']
+        #for tab_web in data_web:
+        #    for event_web in tab_web['eventList']:
+        #        if event_web['channel']['name'] not in channel_list:
+        #            channel_list.append(event_web['channel']['name'])
+        #            for tab in data:
+        #                if tab['tabName'] == tab_web['tabName']:
+        #                    tab['eventList'].append(event_web)
 
     for tab in data:
         if tab['tabName'] == 'film':
@@ -424,10 +426,10 @@ def getInfoLabel(asset_type, item_data):
     if 'mediainfo' in data:
         data = data['mediainfo']
     elif extMediaInfos and extMediaInfos == 'true':
-            try:
-                data = getAssetDetailsFromCache(data['id'])
-            except:
-                pass 
+        try:
+            data = getAssetDetailsFromCache(data['id'])
+        except:
+            pass 
     info = {}
     info['title'] = data.get('title', '')
     info['originaltitle'] = data.get('original_title', '')
@@ -472,9 +474,12 @@ def getInfoLabel(asset_type, item_data):
         info['genre'] = data.get('item_category_name', '')
     if asset_type == 'live':
         item_data['event']['subtitle'] = htmlparser.unescape(item_data['event'].get('subtitle', ''))
-        info['title'] = item_data['event'].get('subtitle', '')
+        if item_data['channel']['name'].find("Bundesliga") != -1 or item_data['channel']['name'].find("Sport") != -1:
+            info['title'] = item_data['event'].get('subtitle', '')
+        if info['title'] == '':
+            info['title'] = item_data['event'].get('title', '')
         info['plot'] = data.get('synopsis', '').replace('\n', '').strip() if data.get('synopsis', '') != '' else item_data['event'].get('subtitle', '')
-        if 'assetid' in item_data['event'] and not item_data['channel']['msMediaUrl'].startswith('http://'):
+        if 'assetid' in item_data['event']:
             if 'mediainfo' in item_data:
                 info['title'] = data.get('title', '')
                 info['plot'] = data.get('synopsis', '').replace('\n', '').strip()
