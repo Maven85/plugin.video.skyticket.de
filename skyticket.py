@@ -98,7 +98,7 @@ class SkyTicket:
         print response
 
         if response['resultMessage'] == 'OK':
-            self.sessionId = response['skyticketSessionId']
+            self.sessionId = response['skygoSessionId']
             self.entitlements = response['entitlements']
             print "User still logged in"
             return True
