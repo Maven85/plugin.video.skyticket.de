@@ -1,2 +1,7 @@
+1.0.1
+- LiveTV:
+  -> Fehler beim Starten der Streams behoben
+  -> Sendungsanzeige korrigiert
+- Fehler beim Setzen der Session behoben 
 1.0.0
 - Initial release
