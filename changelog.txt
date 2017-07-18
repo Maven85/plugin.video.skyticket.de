@@ -1,3 +1,5 @@
+1.0.3
+- Fix für Jugendschutzeinstellung
 1.0.2
 - Fix für Log-Warnhinweise
 1.0.1
