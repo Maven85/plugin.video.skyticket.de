@@ -324,7 +324,7 @@ def listSeasonsFromSeries(series_id):
     url = skyticket.baseUrl + '/st/multiplatform/web/json/details/series/' + str(series_id) + '_global.json'
     r = requests.get(url)
     data = r.json()['serieRecap']['serie']
-    xbmcplugin.setContent(addon_handle, 'seasons')
+    xbmcplugin.setContent(addon_handle, 'tvshows')
     for season in data['seasons']['season']:
         url = common.build_url({'action': 'listSeason', 'id': season['id'], 'series_id': data['id']})
         label = '%s - Staffel %02d' % (data['title'], season['nr'])
@@ -354,6 +354,16 @@ def getAssets(data, key='asset_type'):
             asset_list.append({'type': asset[key], 'label': '', 'url': url, 'data': asset})
         elif asset[key].lower() == 'series':
             url = common.build_url({'action': 'listSeries', 'id': asset['id']})
+            asset_list.append({'type': asset[key], 'label': asset['title'], 'url': url, 'data': asset})
+        elif asset[key].lower() == 'season':
+            url = skygo.baseUrl + '/sg/multiplatform/web/json/details/series/' + str(asset['serie_id']) + '_global.json'
+            r = requests.get(url)
+            serie = r.json()['serieRecap']['serie']
+            asset['synopsis'] = serie['synopsis']
+            for season in serie['seasons']['season']:
+                if season['id'] == asset['id']:
+                    asset['episodes'] = season['episodes']
+            url = common.build_url({'action': 'listSeason', 'id': asset['id'], 'series_id': asset['serie_id']})
             asset_list.append({'type': asset[key], 'label': asset['title'], 'url': url, 'data': asset})
 
     return asset_list
@@ -561,7 +571,7 @@ def getWatchlistContextItem(item, delete=False):
         action = 'watchlistDel'
     if asset_type == 'searchresult':
         asset_type = item['data']['contentType']
-    if asset_type == 'Episode':
+    if delete == False and asset_type == 'Episode' and len(item.get('data').get('episodes', {})) > 0:
         for episode in item.get('data').get('episodes').get('episode'):
             ids.append(str(episode.get('id')))
     else:
@@ -574,7 +584,7 @@ def listAssets(asset_list, isWatchlist=False):
     for item in asset_list:
         isPlayable = False
         li = xbmcgui.ListItem(label=item['label'], iconImage=icon_file)
-        if item['type'] in ['Film', 'Episode', 'Sport', 'Clip', 'Series', 'live', 'searchresult']:
+        if item['type'] in ['Film', 'Episode', 'Sport', 'Clip', 'Series', 'live', 'searchresult', 'Season']:
             isPlayable = True
             #Check Altersfreigabe / Jugendschutzeinstellungen
             parental_rating = 0
@@ -588,7 +598,7 @@ def listAssets(asset_list, isWatchlist=False):
             item['url'] = item['url'] + ('&' if item['url'].find('?') > -1 else '?') + urllib.urlencode({'infolabels': info, 'parental_rating': parental_rating})
             li.setLabel(info['title'])         
             li.setArt({'poster': getPoster(item['data']), 'fanart': getHeroImage(item['data'])})
-            if item['type'] != 'Series':
+            if item['type'] not in ['Series', 'Season']:
                 li = addStreamInfo(li, item['data'])
         if item['type'] in ['Film']:
             xbmcplugin.setContent(addon_handle, 'movies')
@@ -597,7 +607,7 @@ def listAssets(asset_list, isWatchlist=False):
             else:
                 poster_path = getPoster(item['data']) 
             li.setArt({'poster': poster_path})
-        elif item['type'] in ['Series']:
+        elif item['type'] in ['Series', 'Season']:
             xbmcplugin.setContent(addon_handle, 'tvshows')
             isPlayable = False
         elif item['type'] in ['Episode']:
@@ -616,7 +626,7 @@ def listAssets(asset_list, isWatchlist=False):
             xbmcplugin.setContent(addon_handle, 'files')
             if 'TMDb_poster_path' in item['data']:
                 poster = item['data']['TMDb_poster_path']
-            elif 'mediainfo' in item['data']:
+            elif 'mediainfo' in item['data'] and not item['data']['channel']['name'].startswith('Sky Sport'):
                 poster = getPoster(item['data']['mediainfo'])
             else:
                 poster = getPoster(item['data']['channel'])
@@ -627,6 +637,8 @@ def listAssets(asset_list, isWatchlist=False):
         #add contextmenu item for watchlist to playable content - not for live and clip content
         if isPlayable and not item['type'] in ['live', 'Clip']:
             li.addContextMenuItems(getWatchlistContextItem(item, isWatchlist), replaceItems=False)
+        elif item['type'] == 'Season':
+            li.addContextMenuItems(getWatchlistContextItem({'type': 'Episode', 'data': item['data']}, False), replaceItems=False)
         li.setProperty('IsPlayable', str(isPlayable).lower())
         xbmcplugin.addDirectoryItem(handle=addon_handle, url=item['url'],
                                     listitem=li, isFolder=(not isPlayable))

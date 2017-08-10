@@ -1,6 +1,7 @@
 +1.10.5
 - Anzeige von Streaminfos
 - Hinzufügen von Episoden einer Staffel zur Merkliste
+- Unterstützung für "Staffelstarts"
 1.0.4
 - Berücksichtigung der FSK-Angaben bei Streamstart
 1.0.3
