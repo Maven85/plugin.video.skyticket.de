@@ -308,7 +308,7 @@ class SkyTicket:
         # Inputstream settings
         is_addon = getInputstreamAddon()
         if not is_addon:
-            xbmcgui.Dialog().notification('SkyTicket Fehler', 'Addon "inputstream.adaptive" fehlt!', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('Sky Ticket Fehler', 'Addon "inputstream.adaptive" fehlt!', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             return False
         
         #Jugendschutz
@@ -336,7 +336,7 @@ class SkyTicket:
                 # Start Playing
                 xbmcplugin.setResolvedUrl(addon_handle, True, listitem=li)
             else:
-                xbmcgui.Dialog().notification('SkyTicket Fehler', 'Keine Berechtigung zum Abspielen dieses Eintrags', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+                xbmcgui.Dialog().notification('Sky Ticket Fehler', 'Keine Berechtigung zum Abspielen dieses Eintrags', xbmcgui.NOTIFICATION_ERROR, 2000, True)
         else:
-            xbmcgui.Dialog().notification('SkyTicket Fehler', 'Fehler beim Login.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('Sky Ticket Fehler', 'Fehler beim Login.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             print 'Fehler beim Einloggen'

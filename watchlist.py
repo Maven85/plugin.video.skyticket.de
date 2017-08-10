@@ -50,9 +50,9 @@ def addToWatchlist(asset_id, asset_type):
     r = skyticket.session.get(url)
     res = json.loads(r.text[3:len(r.text)-1])
     if res['resultMessage'] == 'OK':
-        xbmcgui.Dialog().notification('SkyTicket ', asset_type + ' zur Merkliste hinzugefügt', xbmcgui.NOTIFICATION_INFO, 2000, True)
+        xbmcgui.Dialog().notification('Sky Ticket ', asset_type + ' zur Merkliste hinzugefügt', xbmcgui.NOTIFICATION_INFO, 2000, True)
     else:
-        xbmcgui.Dialog().notification('SkyTicket ', asset_type + ' konnte nicht zur Merkliste hinzugefügt werden', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+        xbmcgui.Dialog().notification('Sky Ticket ', asset_type + ' konnte nicht zur Merkliste hinzugefügt werden', xbmcgui.NOTIFICATION_ERROR, 2000, True)
 
 def deleteFromWatchlist(asset_id):
     url = base_url + 'delete?assetId=' + asset_id + '&version=12354&platform=web&product=ST&catalog=st'
@@ -61,4 +61,4 @@ def deleteFromWatchlist(asset_id):
     if res['resultMessage'] == 'OK':
         xbmc.executebuiltin('Container.Refresh')
     else:
-        xbmcgui.Dialog().notification('SkyTicket', 'Fehler: Merkliste', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+        xbmcgui.Dialog().notification('Sky Ticket', 'Fehler: Merkliste', xbmcgui.NOTIFICATION_ERROR, 2000, True)
