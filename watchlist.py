@@ -46,7 +46,7 @@ def listWatchlist(asset_type, page=0):
     
 def addToWatchlist(asset_id, asset_type):
     skyticket.login()
-    url = base_url + 'add?assetId=' + asset_id + '&type=' + asset_type + '&version=12354&platform=web&product=ST&catalog=st'
+    url = base_url + 'add?assetId=' + asset_id + '&type=' + asset_type + '&version=12354&platform=web&product=ST&catalog=sg'
     r = skyticket.session.get(url)
     res = json.loads(r.text[3:len(r.text)-1])
     if res['resultMessage'] == 'OK':
