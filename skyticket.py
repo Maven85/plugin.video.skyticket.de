@@ -20,6 +20,8 @@ import xbmc
 import xbmcgui
 import xbmcaddon, xbmcplugin
 
+from inputstreamhelper import Helper
+
 LOGIN_STATUS = { 'SUCCESS': 'T_100',
                   'SESSION_INVALID': 'S_218',
                   'OTHER_SESSION':'T_206' }
@@ -305,15 +307,14 @@ class SkyTicket:
         return True
 
     def play(self, manifest_url, package_code, parental_rating=0, info_tag=None, apix_id=None):
-        # Inputstream settings
-        is_addon = getInputstreamAddon()
-        if not is_addon:
-            xbmcgui.Dialog().notification('Sky Ticket Fehler', 'Addon "inputstream.adaptive" fehlt!', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+        # Inputstream and DRM
+        helper = Helper(protocol='ism', drm='widevine')
+        if not helper.check_inputstream():
             return False
         
         #Jugendschutz
         if not self.parentalCheck(parental_rating, play=True):
-            xbmcgui.Dialog().notification('SkyTicket - FSK ' + str(parental_rating), 'Keine Berechtigung zum Abspielen dieses Eintrags.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
+            xbmcgui.Dialog().notification('Sky Ticket - FSK ' + str(parental_rating), 'Keine Berechtigung zum Abspielen dieses Eintrags.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             return False
 
         if self.login(username, password):

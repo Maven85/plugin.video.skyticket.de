@@ -1,4 +1,6 @@
-+1.10.5
+1.10.6
+- Abhängigkeit zu "inputstream adaptive" und "inputstreamhelper"
+1.10.5
 - Anzeige von Streaminfos
 - Hinzufügen von Episoden einer Staffel zur Merkliste
 - Unterstützung für "Staffelstarts"
