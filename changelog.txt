@@ -1,7 +1,10 @@
-1.10.6
+1.0.7
+- Fix Encoding
+- Option zum Leeren des Caches
+1.0.6
 - Abhängigkeit zu "inputstream adaptive" und "inputstreamhelper"
 - Anzeige vom Verfügbarkeitsdatum
-1.10.5
+1.0.5
 - Anzeige von Streaminfos
 - Hinzufügen von Episoden einer Staffel zur Merkliste
 - Unterstützung für "Staffelstarts"
