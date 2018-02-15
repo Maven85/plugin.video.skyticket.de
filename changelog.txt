@@ -1,3 +1,5 @@
+1.0.8.2
+- Fix für die Anzeige der TMDb-Poster
 1.0.8.1
 - Fix Unicode Error
 1.0.8
