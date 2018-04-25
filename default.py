@@ -11,10 +11,17 @@ from skyticket import SkyTicket
 import navigation as nav
 import watchlist
 
-skyticket = SkyTicket()
-addon_handle = int(sys.argv[1])
 plugin_base_url = sys.argv[0]
 params = dict(urlparse.parse_qsl(sys.argv[2][1:]))
+
+addon_handle = int(sys.argv[1])
+skyticket = SkyTicket(addon_handle)
+
+vod.skyticket = skyticket
+nav.skyticket = skyticket
+clips.skyticket = skyticket
+liveTv.skyticket = skyticket
+watchlist.skyticket = skyticket
 
 # Router for all plugin actions
 if 'action' in params:
@@ -31,7 +38,7 @@ if 'action' in params:
     elif params['action'] == 'playLive':
         if 'infolabels' in params:
             liveTv.playLiveTv(params['manifest_url'], package_code=params['package_code'], infolabels=params['infolabels'], parental_rating=int(params['parental_rating']))
-        else:    
+        else:
             liveTv.playLiveTv(params['manifest_url'], package_code=params['package_code'], parental_rating=int(params['parental_rating']))
 
     elif params['action'] == 'listLiveTvChannelDirs':
@@ -71,7 +78,7 @@ if 'action' in params:
 
     elif params['action'] == 'parentalSettings':
         nav.showParentalSettings()
-    
+
     elif params['action'] == 'login':
         skyticket.setLogin()
 

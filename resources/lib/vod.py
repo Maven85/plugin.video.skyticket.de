@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 import ast
 from skyticket import SkyTicket
 import navigation as nav
 
-skyticket = SkyTicket()
+skyticket = None
+
 
 def playAsset(asset_id, infolabels='', parental_rating=0):
-    #get asset details and build infotag from it
+    # get asset details and build infotag from it
     asset_info = nav.getAssetDetailsFromCache(asset_id)
     manifest_url = asset_info['media_url']
     if 'ms_media_url' in asset_info:

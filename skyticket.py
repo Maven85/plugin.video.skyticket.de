@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 import base64
 import struct
 
@@ -28,7 +27,6 @@ LOGIN_STATUS = { 'SUCCESS': 'T_100',
                   'OTHER_SESSION':'T_206' }
 
 addon = xbmcaddon.Addon()
-addon_handle = int(sys.argv[1])
 autoKillSession = addon.getSetting('autoKillSession')
 username = addon.getSetting('email')
 password = addon.getSetting('password')
@@ -48,12 +46,13 @@ android_deviceid = ''
 if platform == osAndroid:
     license_url = ''
     license_type = 'com.microsoft.playready'
-            
+
     if addon.getSetting('android_deviceid'):
         android_deviceid = addon.getSetting('android_deviceid')
     else:
         android_deviceid = str(uuid.uuid1())
         addon.setSetting('android_deviceid', android_deviceid)
+
 
 # Get installed inputstream addon
 def getInputstreamAddon():
@@ -62,8 +61,9 @@ def getInputstreamAddon():
     if not "error" in data.keys():
         if data["result"]["addon"]["enabled"] == True:
             return True
-        
+
     return None
+
 
 class SkyTicket:
     """Sky Ticket Class"""
@@ -71,17 +71,17 @@ class SkyTicket:
     baseUrl = "https://skyticket.sky.de"
     entitlements = []
 
-
-    def __init__(self):
+    def __init__(self, addon_handle):
         self.sessionId = ''
         self.cookiePath = cookiePath
         self.license_url = license_url
         self.license_type = license_type
         self.android_deviceId = android_deviceid
+        self.addon_handle = addon_handle
 
         # Create session with old cookies
         self.session = requests.session()
-        self.session.headers.setdefault('User-Agent','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.75 Safari/537.36')
+        self.session.headers.setdefault('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.75 Safari/537.36')
 
         if os.path.isfile(cookiePath):
             with open(cookiePath) as f:
@@ -90,11 +90,10 @@ class SkyTicket:
                 self.session.cookies = cookies
         return
 
-
     def isLoggedIn(self):
         """Check if User is still logged in with the old cookies"""
         r = self.session.get('https://skyticket.sky.de/SILK/services/public/user/getdata?product=ST&platform=web&version=12354')
-        #Parse json
+        # Parse json
         response = r.text[3:-1]
         response = json.loads(response)
 
@@ -118,12 +117,12 @@ class SkyTicket:
 
     def sendLogin(self, username, password):
         # Try to login
-        login = "email="+username
+        login = "email=" + username
         if not re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$", username):
-            login = "customerCode="+username
+            login = "customerCode=" + username
 
-        r = self.session.get("https://skyticket.sky.de/SILK/services/public/session/login?version=12354&platform=web&product=ST&"+login+"&password="+self.decode(password)+"&remMe=true")
-        #Parse jsonp
+        r = self.session.get("https://skyticket.sky.de/SILK/services/public/session/login?version=12354&platform=web&product=ST&" + login + "&password=" + self.decode(password) + "&remMe=true")
+        # Parse jsonp
         response = r.text[3:-1]
         response = json.loads(response)
         print response
@@ -132,7 +131,7 @@ class SkyTicket:
     def login(self, username=username, password=password, forceLogin=False, askKillSession=True):
         # If already logged in and active session everything is fine
         if forceLogin or not self.isLoggedIn():
-            #remove old cookies
+            # remove old cookies
             self.session.cookies.clear_session_cookies()
             response = self.sendLogin(username, password)
 
@@ -143,7 +142,7 @@ class SkyTicket:
                     kill_session = True
 
                 if not kill_session:
-                    kill_session = xbmcgui.Dialog().yesno('Sie sind bereits eingeloggt!','Sie sind bereits auf einem anderen Gerät oder mit einem anderen Browser eingeloggt. Wollen Sie die bestehende Sitzung beenden und sich jetzt hier neu anmelden?')
+                    kill_session = xbmcgui.Dialog().yesno('Sie sind bereits eingeloggt!', 'Sie sind bereits auf einem anderen Gerät oder mit einem anderen Browser eingeloggt. Wollen Sie die bestehende Sitzung beenden und sich jetzt hier neu anmelden?')
 
                 if kill_session:
                     # Kill all Sessions (including ours)
@@ -169,14 +168,14 @@ class SkyTicket:
 
         # If any case is not matched return login failed
         return False
-    
-    def setLogin(self):    
+
+    def setLogin(self):
         keyboard = xbmc.Keyboard(username, 'Kundennummer / E-Mail-Adresse')
         keyboard.doModal()
         if keyboard.isConfirmed() and keyboard.getText():
             email = keyboard.getText()
             password = self.setLoginPW()
-            if password != '':            
+            if password != '':
                 addon.setSetting('email', email)
                 password = self.encode(password)
 
@@ -187,27 +186,27 @@ class SkyTicket:
                 else:
                     addon.setSetting('password', '')
                     addon.setSetting('login_acc', '')
-    
+
     def setLoginPW(self):
         keyboard = xbmc.Keyboard('', 'Passwort', True)
         keyboard.doModal(60000)
         if keyboard.isConfirmed() and keyboard.getText() and len(keyboard.getText()) == 4:
             password = keyboard.getText()
             return password
-        return ''   
-    
+        return ''
+
     def encode(self, data):
         k = triple_des(self.getmac(), CBC, "\0\0\0\0\0\0\0\0", padmode=PAD_PKCS5)
         d = k.encrypt(data)
-        return base64.b64encode(d)    
-    
+        return base64.b64encode(d)
+
     def decode(self, data):
         if not data:
             return ''
         k = triple_des(self.getmac(), CBC, "\0\0\0\0\0\0\0\0", padmode=PAD_PKCS5)
         d = k.decrypt(base64.b64decode(data))
-        return d    
-    
+        return d
+
     def getmac(self):
         mac = uuid.getnode()
         if (mac >> 40) % 2:
@@ -219,7 +218,7 @@ class SkyTicket:
 
         # If no url is given we assume that the url hast to be build with the id
         if url == '':
-            url = self.baseUrl+"/st/multiplatform/web/xml/player_playlist/asset/" + str(id) + ".xml"
+            url = self.baseUrl + "/st/multiplatform/web/xml/player_playlist/asset/" + str(id) + ".xml"
 
         r = requests.get(url)
         tree = ET.ElementTree(ET.fromstring(r.text.encode('utf-8')))
@@ -228,7 +227,6 @@ class SkyTicket:
         apix_id = root.find('channel/item/skyde:apixEventId', ns).text
         package_code = root.find('channel/item/skyde:packageCode', ns).text
 
-
         return {'manifestUrl': manifest_url, 'apixId': apix_id, 'duration': 0, 'package_code': package_code}
 
     def getCurrentEvent(self, epg_channel_id):
@@ -236,8 +234,8 @@ class SkyTicket:
         now = datetime.datetime.now()
         current_date = now.strftime("%d.%m.%Y")
         # Get Epg information
-        print 'https://skyticket.sky.de/epgd/st/web/eventList/'+current_date+'/'+epg_channel_id+'/'
-        r = requests.get('https://skyticket.sky.de/epgd/st/web/eventList/'+current_date+'/'+epg_channel_id+'/')
+        print 'https://skyticket.sky.de/epgd/st/web/eventList/' + current_date + '/' + epg_channel_id + '/'
+        r = requests.get('https://skyticket.sky.de/epgd/st/web/eventList/' + current_date + '/' + epg_channel_id + '/')
         events = r.json()[epg_channel_id]
         for event in events:
             start_date = datetime.datetime(*(time.strptime(event['startDate'] + ' ' + event['startTime'], '%d.%m.%Y %H:%M')[0:6]))
@@ -251,15 +249,15 @@ class SkyTicket:
     def getEventPlayInfo(self, event_id, epg_channel_id):
         # If not Sky news then get details id else use hardcoded playinfo_url
         if epg_channel_id != '17':
-            r = requests.get('https://skyticket.sky.de/epgd/st/web/eventDetail/'+event_id+'/'+epg_channel_id+'/')
+            r = requests.get('https://skyticket.sky.de/epgd/st/web/eventDetail/' + event_id + '/' + epg_channel_id + '/')
             event_details_link = r.json()['detailPage']
             # Extract id from details link
             p = re.compile('/([0-9]*)\.html', re.IGNORECASE)
             m = re.search(p, event_details_link)
             playlist_id = m.group(1)
-            playinfo_url = self.baseUrl+'/st/multiplatform/web/xml/player_playlist/asset/' + playlist_id + '.xml'
+            playinfo_url = self.baseUrl + '/st/multiplatform/web/xml/player_playlist/asset/' + playlist_id + '.xml'
         else:
-            playinfo_url = self.baseUrl+'/st/multiplatform/web/xml/player_playlist/ssn/127.xml'
+            playinfo_url = self.baseUrl + '/st/multiplatform/web/xml/player_playlist/ssn/127.xml'
 
         return self.getPlayInfo(url=playinfo_url)
 
@@ -267,21 +265,21 @@ class SkyTicket:
         return entitlement in self.entitlements
 
     def getAssetDetails(self, asset_id):
-        url = 'https://skyticket.sky.de/st/multiplatform/web/json/details/asset/' + str(asset_id) + '.json'       
+        url = 'https://skyticket.sky.de/st/multiplatform/web/json/details/asset/' + str(asset_id) + '.json'
         r = self.session.get(url)
         return r.json()['asset']
 
     def getClipDetails(self, clip_id):
-        url = 'https://skyticket.sky.de/st/multiplatform/web/json/details/clip/' + str(clip_id) + '.json'       
+        url = 'https://skyticket.sky.de/st/multiplatform/web/json/details/clip/' + str(clip_id) + '.json'
         r = self.session.get(url)
         return r.json()['detail']
 
     def get_init_data(self, session_id, apix_id):
         if platform == osAndroid:
-            init_data = 'sessionId='+self.sessionId+'&apixId='+apix_id+'&deviceId=' + self.android_deviceId +'&platformId=AndP&product=BW&version=1.7.1&DeviceFriendlyName=Android'
+            init_data = 'sessionId=' + self.sessionId + '&apixId=' + apix_id + '&deviceId=' + self.android_deviceId + '&platformId=AndP&product=BW&version=1.7.1&DeviceFriendlyName=Android'
         else:
-            init_data = 'kid={UUID}&sessionId='+session_id+'&apixId='+apix_id+'&platformId=&product=BW&channelId='
-            init_data = struct.pack('1B', *[30])+init_data
+            init_data = 'kid={UUID}&sessionId=' + session_id + '&apixId=' + apix_id + '&platformId=&product=BW&channelId='
+            init_data = struct.pack('1B', *[30]) + init_data
             init_data = base64.urlsafe_b64encode(init_data)
         return init_data
 
@@ -312,8 +310,8 @@ class SkyTicket:
         helper = Helper(protocol='ism', drm='widevine')
         if not helper.check_inputstream():
             return False
-        
-        #Jugendschutz
+
+        # Jugendschutz
         if not self.parentalCheck(parental_rating, play=True):
             xbmcgui.Dialog().notification('Sky Ticket - FSK ' + str(parental_rating), 'Keine Berechtigung zum Abspielen dieses Eintrags.', xbmcgui.NOTIFICATION_ERROR, 2000, True)
             return False
@@ -336,7 +334,7 @@ class SkyTicket:
                     li.setProperty('inputstream.adaptive.license_data', init_data)
                 li.setProperty('inputstreamaddon', 'inputstream.adaptive')
                 # Start Playing
-                xbmcplugin.setResolvedUrl(addon_handle, True, listitem=li)
+                xbmcplugin.setResolvedUrl(self.addon_handle, True, listitem=li)
             else:
                 xbmcgui.Dialog().notification('Sky Ticket Fehler', 'Keine Berechtigung zum Abspielen dieses Eintrags', xbmcgui.NOTIFICATION_ERROR, 2000, True)
         else:
