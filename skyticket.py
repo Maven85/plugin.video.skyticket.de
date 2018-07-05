@@ -40,7 +40,7 @@ osAndroid = 1
 if xbmc.getCondVisibility('system.platform.android'):
     platform = osAndroid
 
-license_url = 'https://wvguard.sky.de/WidevineLicenser/WidevineLicenser|User-Agent=Mozilla%2F5.0%20(X11%3B%20Linux%20x86_64)%20AppleWebKit%2F537.36%20(KHTML%2C%20like%20Gecko)%20Chrome%2F49.0.2623.87%20Safari%2F537.36&Referer=https%3A%2F%2Fskyticket.sky.de%2Ffilm%2Fscifi--fantasy%2Fjupiter-ascending%2Fasset%2Ffilmsection%2F144836.html&Content-Type=|R{SSM}|'
+license_url = 'https://wvguard.sky.de/WidevineLicenser/WidevineLicenser|User-Agent=Mozilla%2F5.0%20(Windows%20NT%2010.0%3B%20Win64%3B%20x64)%20AppleWebKit%2F537.36%20(KHTML%2C%20like%20Gecko)%20Chrome%2F66.0.3359.181%20Safari%2F537.36&Referer=https%3A%2F%2Fskyticket.sky.de%2Ffilm%2Fscifi--fantasy%2Fjupiter-ascending%2Fasset%2Ffilmsection%2F144836.html&Content-Type=|R{SSM}|'
 license_type = 'com.widevine.alpha'
 android_deviceid = ''
 if platform == osAndroid:
@@ -278,7 +278,7 @@ class SkyTicket:
         if platform == osAndroid:
             init_data = 'sessionId=' + self.sessionId + '&apixId=' + apix_id + '&deviceId=' + self.android_deviceId + '&platformId=AndP&product=BW&version=1.7.1&DeviceFriendlyName=Android'
         else:
-            init_data = 'kid={UUID}&sessionId=' + session_id + '&apixId=' + apix_id + '&platformId=&product=BW&channelId='
+            init_data = 'kid={UUID}&sessionId=' + session_id + '&apixId=' + apix_id + '&platformId=&product=ST&channelId='
             init_data = struct.pack('1B', *[30]) + init_data
             init_data = base64.urlsafe_b64encode(init_data)
         return init_data
@@ -305,7 +305,7 @@ class SkyTicket:
 
         return True
 
-    def play(self, manifest_url, package_code, parental_rating=0, info_tag=None, apix_id=None):
+    def play(self, manifest_url, package_code, parental_rating=0, info_tag=None, art_tag=None, apix_id=None):
         # Inputstream and DRM
         helper = Helper(protocol='ism', drm='widevine')
         if not helper.check_inputstream():
@@ -326,6 +326,8 @@ class SkyTicket:
                 li = xbmcgui.ListItem(path=manifest_url)
                 if info_tag:
                     li.setInfo('video', info_tag)
+                if art_tag:
+                    li.setArt(art_tag)
 
                 li.setProperty('inputstream.adaptive.license_type', self.license_type)
                 li.setProperty('inputstream.adaptive.manifest_type', 'ism')

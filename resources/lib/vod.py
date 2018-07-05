@@ -8,7 +8,7 @@ import navigation as nav
 skyticket = None
 
 
-def playAsset(asset_id, infolabels='', parental_rating=0):
+def playAsset(asset_id, infolabels=None, art=None, parental_rating=0):
     # get asset details and build infotag from it
     asset_info = nav.getAssetDetailsFromCache(asset_id)
     manifest_url = asset_info['media_url']
@@ -16,7 +16,7 @@ def playAsset(asset_id, infolabels='', parental_rating=0):
         manifest_url = asset_info['ms_media_url']
 
     info_tag = None
-    if infolabels != '':
+    if infolabels:
         info_tag = ast.literal_eval(infolabels)
     else:
         info_tag, asset_info = nav.getInfoLabel(asset_info.get('type', ''), asset_info)

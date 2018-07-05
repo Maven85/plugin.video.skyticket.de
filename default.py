@@ -3,6 +3,7 @@
 
 import sys
 import urlparse
+import ast
 import resources.lib.vod as vod
 import resources.lib.clips as clips
 import resources.lib.liveTv as liveTv
@@ -23,24 +24,22 @@ clips.skyticket = skyticket
 liveTv.skyticket = skyticket
 watchlist.skyticket = skyticket
 
+
+def getDictFromString(str):
+    return ast.literal_eval(str) if str else None
+
+
 # Router for all plugin actions
 if 'action' in params:
 
     print params
 
     if params['action'] == 'playVod':
-        if 'infolabels' in params:
-            vod.playAsset(params['vod_id'], infolabels=params['infolabels'], parental_rating=int(params['parental_rating']))
-        else:
-            vod.playAsset(params['vod_id'], parental_rating=int(params['parental_rating']))
+        vod.playAsset(params['vod_id'], infolabels=getDictFromString(params.get('infolabels', None)), art=getDictFromString(params.get('art', None)), parental_rating=int(params.get('parental_rating', 0)))
     elif params['action'] == 'playClip':
         clips.playClip(params['id'])
     elif params['action'] == 'playLive':
-        if 'infolabels' in params:
-            liveTv.playLiveTv(params['manifest_url'], package_code=params['package_code'], infolabels=params['infolabels'], parental_rating=int(params['parental_rating']))
-        else:
-            liveTv.playLiveTv(params['manifest_url'], package_code=params['package_code'], parental_rating=int(params['parental_rating']))
-
+        liveTv.playLiveTv(params['manifest_url'], package_code=params.get('package_code'), infolabels=getDictFromString(params.get('infolabels', None)), art=getDictFromString(params.get('art', None)), parental_rating=int(params.get('parental_rating', 0)))
     elif params['action'] == 'listLiveTvChannelDirs':
         nav.listLiveTvChannelDirs()
     elif params['action'] == 'listLiveTvChannels':
