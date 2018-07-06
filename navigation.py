@@ -207,7 +207,7 @@ def listLiveTvChannels(channeldir_name):
             if addon.getSetting('show_refresh') == 'true':
                 url = common.build_url({'action': 'refresh'})
                 li = xbmcgui.ListItem(label='Aktualisieren', iconImage=icon_file, thumbnailImage=icon_file)
-                xbmcplugin.addDirectoryItem(handle=skygo.addon_handle, url=url, listitem=li, isFolder=False)
+                xbmcplugin.addDirectoryItem(handle=skyticket.addon_handle, url=url, listitem=li, isFolder=False)
 
             listAssets(sorted(details.values(), key=lambda k:k['data']['channel']['name']))
 

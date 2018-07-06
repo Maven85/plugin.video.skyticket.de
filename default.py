@@ -84,5 +84,8 @@ if 'action' in params:
     elif params['action'] == 'clearCache':
         nav.clearCache()
 
+    elif params['action'] == 'refresh':
+        xbmc.executebuiltin('container.refresh')
+
 else:
     nav.rootDir()
