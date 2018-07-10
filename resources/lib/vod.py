@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import ast
-from skyticket import SkyTicket
 import navigation as nav
 
 skyticket = None

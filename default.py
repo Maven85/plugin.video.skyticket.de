@@ -7,10 +7,9 @@ import ast
 import resources.lib.vod as vod
 import resources.lib.clips as clips
 import resources.lib.liveTv as liveTv
-from skyticket import SkyTicket
-
 import navigation as nav
 import watchlist
+from skyticket import SkyTicket
 
 plugin_base_url = sys.argv[0]
 params = dict(urlparse.parse_qsl(sys.argv[2][1:]))

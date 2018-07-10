@@ -7,8 +7,8 @@ import xbmcaddon
 import xbmcgui
 import xbmcplugin
 import resources.lib.common as common
-from skyticket import SkyTicket
 import navigation as nav
+
 skyticket = None
 
 base_url = 'https://skyticket.sky.de/SILK/services/public/watchlist/'
